@@ -10,7 +10,8 @@
 using namespace std;
 using namespace std::chrono;
 
-const string DATASET_PATH = "resources/words_alpha.txt";
+const string DATASET_PATH = "../resources/words_alpha.txt";
+const int HASH_TABLE_SIZE = 200003;
 
 vector<string> loadWordsFromFile(const string& filename) {
     vector<string> words;
@@ -32,45 +33,56 @@ vector<string> loadWordsFromFile(const string& filename) {
 
 double measureTrieInsert(Trie& trie, const vector<string>& words) {
     auto start = high_resolution_clock::now();
+
     for (const string& word : words) {
         trie.insert(word);
     }
+
     auto end = high_resolution_clock::now();
     return duration<double, milli>(end - start).count();
 }
 
-double measureHashInsert(HashTable& hashTable, const vector<string>& words) {
+double measureHashInsert(WordSearch& hashTable, const vector<string>& words) {
     auto start = high_resolution_clock::now();
+
     for (const string& word : words) {
         hashTable.insert(word);
     }
+
     auto end = high_resolution_clock::now();
     return duration<double, milli>(end - start).count();
 }
 
 double measureTrieSearch(Trie& trie, const vector<string>& words) {
     auto start = high_resolution_clock::now();
+
     for (const string& word : words) {
         trie.search(word);
     }
+
     auto end = high_resolution_clock::now();
     return duration<double, milli>(end - start).count();
 }
 
-double measureHashSearch(HashTable& hashTable, const vector<string>& words) {
+double measureHashSearch(WordSearch& hashTable, const vector<string>& words) {
     auto start = high_resolution_clock::now();
+
     for (const string& word : words) {
         hashTable.search(word);
     }
+
     auto end = high_resolution_clock::now();
     return duration<double, milli>(end - start).count();
 }
 
-void runBenchmark(Trie& trie, HashTable& hashTable, const vector<string>& words) {
-    double trieInsertMs = measureTrieInsert(trie, words);
-    double hashInsertMs = measureHashInsert(hashTable, words);
-    double trieSearchMs = measureTrieSearch(trie, words);
-    double hashSearchMs = measureHashSearch(hashTable, words);
+void runBenchmark(const vector<string>& words) {
+    Trie benchmarkTrie;
+    WordSearch benchmarkHash(HASH_TABLE_SIZE);
+
+    double trieInsertMs = measureTrieInsert(benchmarkTrie, words);
+    double hashInsertMs = measureHashInsert(benchmarkHash, words);
+    double trieSearchMs = measureTrieSearch(benchmarkTrie, words);
+    double hashSearchMs = measureHashSearch(benchmarkHash, words);
 
     cout << "\n===== Runtime Comparison =====\n";
     cout << fixed << setprecision(3);
@@ -82,12 +94,18 @@ void runBenchmark(Trie& trie, HashTable& hashTable, const vector<string>& words)
     cout << "Hash search time: " << hashSearchMs << " ms\n";
 
     cout << "\nFaster insert: ";
-    if (trieInsertMs < hashInsertMs) cout << "Trie\n";
-    else cout << "Hash Table\n";
+    if (trieInsertMs < hashInsertMs) {
+        cout << "Trie\n";
+    } else {
+        cout << "Hash Table\n";
+    }
 
     cout << "Faster search: ";
-    if (trieSearchMs < hashSearchMs) cout << "Trie\n";
-    else cout << "Hash Table\n";
+    if (trieSearchMs < hashSearchMs) {
+        cout << "Trie\n";
+    } else {
+        cout << "Hash Table\n";
+    }
 }
 
 void printMenu() {
@@ -112,7 +130,8 @@ int main() {
     }
 
     Trie trie;
-    HashTable hashTable;
+    WordSearch hashTable(HASH_TABLE_SIZE);
+
     bool trieLoaded = false;
     bool hashLoaded = false;
 
@@ -120,7 +139,11 @@ int main() {
 
     do {
         printMenu();
-        cin >> choice;
+
+        if (!(cin >> choice)) {
+            cout << "Invalid input. Exiting program.\n";
+            return 1;
+        }
 
         if (choice == 1) {
             Trie freshTrie;
@@ -134,7 +157,7 @@ int main() {
                  << "Insert time: " << timeMs << " ms\n";
         }
         else if (choice == 2) {
-            HashTable freshHash;
+            WordSearch freshHash(HASH_TABLE_SIZE);
             hashTable = freshHash;
 
             double timeMs = measureHashInsert(hashTable, words);
@@ -200,9 +223,9 @@ int main() {
 
             double timeUs = duration<double, micro>(end - start).count();
 
-            cout << "Matches found: " << matches.size() << endl;
+            cout << "Matches found: " << matches.size() << '\n';
             for (size_t i = 0; i < matches.size() && i < 20; i++) {
-                cout << matches[i] << endl;
+                cout << matches[i] << '\n';
             }
             if (matches.size() > 20) {
                 cout << "...and more\n";
@@ -212,9 +235,7 @@ int main() {
                  << "Prefix search time: " << timeUs << " microseconds\n";
         }
         else if (choice == 6) {
-            Trie benchmarkTrie;
-            HashTable benchmarkHash;
-            runBenchmark(benchmarkTrie, benchmarkHash, words);
+            runBenchmark(words);
         }
         else if (choice == 7) {
             cout << "Exiting program.\n";
