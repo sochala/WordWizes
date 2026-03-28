@@ -5,6 +5,11 @@
 This project implements a word-processing system using efficient data structures (Trie and Hash Table). It reads a dataset of words and performs operations such as loading, searching, and comparing runtime performance.
 
 ---
+## Report 
+
+[Report_108 (3).pdf](https://github.com/user-attachments/files/26326649/Report_108.3.pdf)
+
+
 
 ## Requirements
 
